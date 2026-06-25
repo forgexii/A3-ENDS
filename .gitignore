@@ -1,0 +1,37 @@
+# Virtual Environments
+venv/
+env/
+.env
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Large Datasets & Machine Learning Artifacts
+datasets/raw/
+datasets/processed/
+datasets/features/
+datasets/realtime_features/
+*.csv
+*.npy
+
+# Trained Models (Optional: Comment out if you DO want to push them and they are < 100MB)
+# models/**/*.pkl
+# models/**/*.keras
+
+# Databases
+backend/data/*.db
+backend/data/*.sqlite
+*.db
+*.sqlite
+
+# IDEs and OS Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
