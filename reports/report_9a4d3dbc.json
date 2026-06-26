@@ -1,0 +1,6 @@
+{
+  "report_id": "9a4d3dbc",
+  "report_type": "docx",
+  "timestamp": "2026-06-26T05:12:38.204888",
+  "llm_analysis": "{\n  \"error\": \"OPENROUTER_API_KEY not configured\"\n}"
+}

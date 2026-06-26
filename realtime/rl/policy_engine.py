@@ -55,26 +55,32 @@ class PolicyEngine:
     ):
         """
         Learn from successful detection.
-        
-        Args:
-            detection: Detection data
-            outcome: "true_positive" or "true_negative"
         """
         severity = detection.get("severity", "LOW")
         state = self.agent.get_state_key(severity, False)
         
+        # Get actual action taken or recommended action
+        action_taken = detection.get("response", {}).get("action_level")
+        if not action_taken or action_taken == "none":
+            action_taken = detection.get("recommended_action", "MONITOR")
+            
+        action_taken = action_taken.upper()
+        if action_taken not in self.agent.ACTIONS:
+            action_taken = "MONITOR"
+            
         # Reward based on outcome
         reward = 1.0 if outcome == "true_positive" else -0.5
         
         # Update Q-value
-        self.agent.update_q_value(state, "execute", reward)
+        self.agent.update_q_value(state, action_taken, reward)
         
-        logger.info(f"[RL] Learning from {outcome}: state={state}, reward={reward}")
+        logger.info(f"[RL] Learning from {outcome}: state={state}, action={action_taken}, reward={reward}")
         
         self.learning_history.append({
             "type": "detection",
             "outcome": outcome,
             "state": state,
+            "action": action_taken,
             "reward": reward
         })
 
@@ -84,28 +90,33 @@ class PolicyEngine:
     ):
         """
         Learn from false alarm to improve accuracy.
-        
-        Applies negative reward to discourage similar detections.
-        
-        Args:
-            detection: False alarm detection data
         """
         severity = detection.get("severity", "LOW")
         state = self.agent.get_state_key(severity, False)
         
+        # Get actual action taken or recommended action
+        action_taken = detection.get("response", {}).get("action_level")
+        if not action_taken or action_taken == "none":
+            action_taken = detection.get("recommended_action", "MONITOR")
+            
+        action_taken = action_taken.upper()
+        if action_taken not in self.agent.ACTIONS:
+            action_taken = "MONITOR"
+            
         # Negative reward for false alarm
         reward = -1.0
         
         # Update Q-value to penalize this state-action pair
-        self.agent.update_q_value(state, "execute", reward)
+        self.agent.update_q_value(state, action_taken, reward)
         
         logger.warning(
-            f"[RL] Learning from false alarm: state={state}, reward={reward}"
+            f"[RL] Learning from false alarm: state={state}, action={action_taken}, reward={reward}"
         )
         
         self.learning_history.append({
             "type": "false_alarm",
             "state": state,
+            "action": action_taken,
             "reward": reward
         })
 
@@ -116,29 +127,32 @@ class PolicyEngine:
     ):
         """
         Learn from concept drift.
-        
-        Updates policy when model drift is detected.
-        
-        Args:
-            detection: Detection data
-            drift_value: ADWIN drift estimation value
         """
         severity = detection.get("severity", "LOW")
         state = self.agent.get_state_key(severity, True)  # Drift detected
         
+        action_taken = detection.get("response", {}).get("action_level")
+        if not action_taken or action_taken == "none":
+            action_taken = detection.get("recommended_action", "MONITOR")
+            
+        action_taken = action_taken.upper()
+        if action_taken not in self.agent.ACTIONS:
+            action_taken = "MONITOR"
+            
         # Moderate negative reward for drift
         reward = -0.5 + (drift_value * 0.5)  # Scale with drift magnitude
         
         # Update Q-value to adapt to drift
-        self.agent.update_q_value(state, "update_model", reward)
+        self.agent.update_q_value(state, action_taken, reward)
         
         logger.warning(
-            f"[RL] Learning from drift: state={state}, drift={drift_value}, reward={reward}"
+            f"[RL] Learning from drift: state={state}, action={action_taken}, drift={drift_value}, reward={reward}"
         )
         
         self.learning_history.append({
             "type": "drift",
             "state": state,
+            "action": action_taken,
             "drift_value": drift_value,
             "reward": reward
         })
@@ -150,16 +164,20 @@ class PolicyEngine:
     ):
         """
         Learn from analyst decisions.
-        
-        Improves correlation between automatic decisions and analyst judgment.
-        
-        Args:
-            detection: Detection data
-            decision: Analyst's decision
         """
         severity = detection.get("severity", "LOW")
         state = self.agent.get_state_key(severity, False)
         
+        # In this case, the recommended action was the one presented to the analyst
+        actions = detection.get("response_actions", [])
+        if actions:
+            action_taken = actions[0].upper()
+        else:
+            action_taken = "MONITOR"
+            
+        if action_taken not in self.agent.ACTIONS:
+            action_taken = "MONITOR"
+            
         # Reward based on analyst decision alignment
         if decision == "approve":
             reward = 1.0  # Model was correct
@@ -168,17 +186,18 @@ class PolicyEngine:
         else:  # investigate
             reward = 0.0  # Inconclusive
         
-        self.agent.update_q_value(state, "execute", reward)
+        self.agent.update_q_value(state, action_taken, reward)
         
         logger.info(
             f"[RL] Learning from analyst decision '{decision}': "
-            f"state={state}, reward={reward}"
+            f"state={state}, action={action_taken}, reward={reward}"
         )
         
         self.learning_history.append({
             "type": "analyst_feedback",
             "decision": decision,
             "state": state,
+            "action": action_taken,
             "reward": reward
         })
 

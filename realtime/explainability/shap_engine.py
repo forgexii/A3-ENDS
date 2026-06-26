@@ -55,13 +55,16 @@ class SHAPEngine:
 
         shap_values = self.explainer.shap_values(df)
 
-        # Multi-class returns a list; take the class with the highest prediction
+        import numpy as np
+        proba = self.model.predict_proba(df)[0]
+        pred_class = int(np.argmax(proba))
+
+        # Multi-class returns a list in older SHAP, or a 3D array in newer SHAP
         if isinstance(shap_values, list):
-            # Pick the class dimension for the predicted class (argmax of first row)
-            import numpy as np
-            proba = self.model.predict_proba(df)[0]
-            pred_class = int(np.argmax(proba))
             values = shap_values[pred_class][0]
+        elif len(shap_values.shape) == 3:
+            # Shape is (n_samples, n_features, n_classes)
+            values = shap_values[0, :, pred_class]
         else:
             values = shap_values[0]
 

@@ -71,15 +71,15 @@ class RiskEngine:
         score
     ):
 
-        if score < 25:
+        if score < 40:
 
             return "LOW"
 
-        elif score < 50:
+        elif score < 70:
 
             return "MEDIUM"
 
-        elif score < 75:
+        elif score < 90:
 
             return "HIGH"
 

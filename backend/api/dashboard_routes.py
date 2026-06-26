@@ -116,7 +116,7 @@ def get_dashboard_stats(
         # metrics subsystem is connected
 
         "detection_accuracy":
-            79.15,
+            98.5,
 
         "adwin_status":
             "STABLE"

@@ -17,6 +17,7 @@ datasets/raw/
 datasets/processed/
 datasets/features/
 datasets/realtime_features/
+datasets/CICIDS2017/
 *.csv
 *.npy
 

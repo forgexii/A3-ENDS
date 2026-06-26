@@ -70,7 +70,10 @@ def _generate_report_file(
             "incident_report": "docx",
             "powerpoint_deck": "pptx",
             "executive_report": "pptx",
-            "excel_workbook": "xlsx"
+            "excel_workbook": "xlsx",
+            "docx": "docx",
+            "pptx": "pptx",
+            "xlsx": "xlsx"
         }
         
         req_type = report_type.lower()

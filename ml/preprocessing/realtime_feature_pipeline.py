@@ -21,7 +21,7 @@ from backend.core.paths import (
 
 RAW_DATA_PATH = (
     DATASETS_DIR /
-    "processed/CICIDS2017/cleaned_cicids2017.csv"
+    "cleaned_cicids2017/cleaned_cicids2017.csv"
 )
 
 OUTPUT_DIR = (

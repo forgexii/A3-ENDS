@@ -89,10 +89,7 @@ class InferenceEngine:
         )
 
         self.scaler = joblib.load(
-
-            DATASETS_DIR /
-            "realtime_features/CICIDS2017/scaler.pkl"
-
+            MODELS_DIR / "realtime_scaler.pkl"
         )
 
         print(
@@ -225,12 +222,6 @@ class InferenceEngine:
             scaled
         )
 
-        drift_result = (
-            self.adwin.update(
-                score
-            )
-        )
-
         result = {
 
             "anomaly_score":
@@ -252,14 +243,10 @@ class InferenceEngine:
                 None,
 
             "drift_detected":
-                drift_result[
-                    "drift_detected"
-                ],
+                False,
 
             "drift_estimation":
-                drift_result[
-                    "estimation"
-                ]
+                0.0
         }
 
         if result["is_anomaly"]:
@@ -291,6 +278,14 @@ class InferenceEngine:
             result.update(
                 risk
             )
+            
+            # Thesis 3.2.8: ADWIN tracks risk score, not raw MSE
+            drift_result = self.adwin.update(
+                risk["risk_score"] / 100.0
+            )
+            
+            result["drift_detected"] = drift_result["drift_detected"]
+            result["drift_estimation"] = drift_result["estimation"]
 
             policy = (
                 self.policy_engine.decide(

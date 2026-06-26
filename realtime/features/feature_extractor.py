@@ -63,45 +63,31 @@ class FeatureExtractor:
                 len(packet)
             )
 
+        duration_sec = 0.0
         duration = 0.0
 
         if len(timestamps) > 1:
+            duration_sec = float(max(timestamps) - min(timestamps))
+            # CICIDS2017 Flow Duration is in microseconds
+            duration = float(duration_sec * 1e6)
 
-            duration = float(
+        packet_count = len(packet_sizes)
+        
+        mean_packet_size = float(np.mean(packet_sizes)) if packet_sizes else 0.0
+        std_packet_size = float(np.std(packet_sizes)) if packet_sizes else 0.0
 
-                max(timestamps)
-                -
-                min(timestamps)
-
-            )
-
-        packet_count = len(
-            packet_sizes
-        )
-
-        mean_packet_size = float(
-            np.mean(packet_sizes)
-        )
-
-        std_packet_size = float(
-            np.std(packet_sizes)
-        )
-
-        total_bytes = float(
-            np.sum(packet_sizes)
-        )
+        total_bytes_sum = float(np.sum(packet_sizes)) if packet_sizes else 0.0
+        # CICIDS2017 "total_bytes" was mapped to "Flow Bytes/s"
+        total_bytes = 0.0
+        if duration_sec > 0:
+            total_bytes = float(total_bytes_sum / duration_sec)
 
         mean_iat = 0.0
 
         if len(timestamps) > 1:
-
-            iats = np.diff(
-                timestamps
-            )
-
-            mean_iat = float(
-                np.mean(iats)
-            )
+            iats = np.diff(timestamps)
+            # CICIDS2017 Flow IAT Mean is in microseconds
+            mean_iat = float(np.mean(iats) * 1e6)
 
         return {
 
