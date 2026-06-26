@@ -1,0 +1,122 @@
+/* A3-ENDS Cyber/SOC Aesthetic Stylesheet */
+
+* {
+    font-family: "Segoe UI", "Roboto", "Helvetica Neue", sans-serif;
+    font-size: 14px;
+    color: #E2E8F0; /* Slate 200 */
+}
+
+QMainWindow, QDialog, QWidget#MainContent {
+    background-color: #0F172A; /* Slate 900 */
+}
+
+/* Sidebar Styling */
+QWidget#Sidebar {
+    background-color: #1E293B; /* Slate 800 */
+    border-right: 1px solid #334155; /* Slate 700 */
+}
+
+QLabel#AppTitle {
+    font-size: 20px;
+    font-weight: bold;
+    color: #06B6D4; /* Cyan 500 */
+    padding: 15px;
+    border-bottom: 1px solid #334155;
+}
+
+QPushButton.SidebarButton {
+    background-color: transparent;
+    color: #94A3B8; /* Slate 400 */
+    text-align: left;
+    padding: 12px 20px;
+    border: none;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+QPushButton.SidebarButton:hover {
+    background-color: #334155;
+    color: #F8FAFC;
+}
+
+QPushButton.SidebarButton:checked {
+    background-color: rgba(6, 182, 212, 0.15); /* Tinted Cyan */
+    color: #22D3EE; /* Cyan 400 */
+    border-left: 4px solid #06B6D4;
+}
+
+/* Top Header */
+QWidget#TopHeader {
+    background-color: #1E293B;
+    border-bottom: 1px solid #334155;
+}
+
+QLabel#StatusLabel {
+    color: #22C55E; /* Green 500 */
+    font-weight: bold;
+    padding: 10px;
+}
+
+QLabel#StatusLabel.warning { color: #F59E0B; /* Amber 500 */ }
+QLabel#StatusLabel.critical { color: #EF4444; /* Red 500 */ }
+
+/* Cards */
+QFrame.Card {
+    background-color: #1E293B;
+    border-radius: 8px;
+    border: 1px solid #334155;
+}
+
+QLabel.CardTitle {
+    color: #94A3B8;
+    font-size: 13px;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 10px;
+}
+
+QLabel.CardValue {
+    color: #F8FAFC;
+    font-size: 28px;
+    font-weight: bold;
+    padding-left: 10px;
+    padding-bottom: 10px;
+}
+
+/* Tables */
+QTableView {
+    background-color: #1E293B;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    gridline-color: #334155;
+    color: #E2E8F0;
+    selection-background-color: #334155;
+}
+
+QHeaderView::section {
+    background-color: #0F172A;
+    color: #94A3B8;
+    padding: 6px;
+    border: none;
+    border-bottom: 1px solid #334155;
+    border-right: 1px solid #334155;
+    font-weight: bold;
+}
+
+/* Scrollbars */
+QScrollBar:vertical {
+    background-color: #0F172A;
+    width: 12px;
+    margin: 0px;
+}
+QScrollBar::handle:vertical {
+    background-color: #475569; /* Slate 600 */
+    border-radius: 6px;
+    min-height: 20px;
+}
+QScrollBar::handle:vertical:hover {
+    background-color: #64748B;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
