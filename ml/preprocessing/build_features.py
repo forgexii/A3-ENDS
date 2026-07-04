@@ -25,8 +25,7 @@ from backend.core.paths import (
 print("Loading cleaned dataset...")
 
 df = pd.read_csv(
-    DATASETS_DIR /
-    "processed/CICIDS2017/cleaned_cicids2017.csv"
+    "./cleaned_cicids2017.csv"
 )
 
 print("Separating features and labels...")

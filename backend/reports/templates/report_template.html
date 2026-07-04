@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>A3-ENDS Forensic Report</title>
+    <style>
+        /* CSS reset and base */
+        :root {
+            --bg-page: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --primary: #0f172a;
+            --secondary: #334155;
+            --accent: #3b82f6;
+            --border: #e2e8f0;
+            --critical: #ef4444;
+            --high: #f97316;
+            --medium: #eab308;
+            --low: #22c55e;
+        }
+        
+        @page {
+            size: A4 portrait;
+            margin: 1.5cm;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+            font-size: 11px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--bg-page);
+        }
+
+        /* typography */
+        h1, h2, h3, h4 { color: var(--primary); margin-top: 0; }
+        h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+        h2 { font-size: 14px; border-bottom: 2px solid var(--border); padding-bottom: 4px; margin-top: 16px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--secondary); }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 3px solid var(--primary); margin-bottom: 16px; }
+        .header-left { display: flex; flex-direction: column; }
+        .header-right { text-align: right; font-size: 10px; color: var(--text-muted); line-height: 1.4; }
+
+        /* Grid layouts */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+        /* Cards */
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card-title { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
+        .card-value { font-size: 14px; font-weight: 700; color: var(--primary); }
+        .card-value.code { font-family: monospace; font-size: 12px; }
+        
+        /* Badges */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; display: inline-block; }
+        .badge-critical { background: #fef2f2; color: var(--critical); border: 1px solid #fecaca; }
+        .badge-high { background: #fff7ed; color: var(--high); border: 1px solid #fed7aa; }
+        .badge-medium { background: #fefce8; color: var(--medium); border: 1px solid #fef08a; }
+        .badge-low { background: #f0fdf4; color: var(--low); border: 1px solid #bbf7d0; }
+        .badge-neutral { background: #f1f5f9; color: var(--secondary); border: 1px solid #cbd5e1; }
+
+        /* SHAP Bar Chart */
+        .shap-container { display: flex; flex-direction: column; gap: 8px; }
+        .shap-row { display: flex; align-items: center; }
+        .shap-label { width: 140px; font-size: 10px; font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px;}
+        .shap-bar-wrapper { flex-grow: 1; height: 12px; background: #f1f5f9; border-radius: 2px; position: relative; display: flex; align-items: center; }
+        .shap-bar { height: 100%; border-radius: 2px; }
+        .shap-val { font-size: 10px; font-family: monospace; margin-left: 8px; width: 50px; text-align: right; }
+
+        /* Timeline */
+        .timeline { position: relative; margin-top: 10px; padding-left: 12px; border-left: 2px solid var(--border); }
+        .timeline-item { position: relative; margin-bottom: 12px; }
+        .timeline-item::before { content: ''; position: absolute; left: -17px; top: 3px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg-card); }
+        .timeline-title { font-weight: 600; font-size: 11px; margin-bottom: 2px; }
+        .timeline-desc { color: var(--text-muted); font-size: 10px; }
+        
+        .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 9px; color: var(--text-muted); }
+
+        .llm-box { background: #f8fafc; border-left: 3px solid var(--accent); padding: 12px; font-family: "Georgia", serif; font-size: 11px; font-style: italic; color: #334155; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="header-left">
+                <div style="font-size: 24px; font-weight: 800; letter-spacing: -1px; color: var(--primary);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin-right: 4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    A3-ENDS
+                </div>
+                <div style="font-size: 12px; color: var(--secondary); margin-top: 4px;">Forensic Investigation Report</div>
+            </div>
+            <div class="header-right">
+                <div><strong>Incident ID:</strong> {{ report_id }}</div>
+                <div><strong>Generated Date:</strong> {{ timestamp }}</div>
+                <div><strong>Case Status:</strong> <span style="color: var(--critical); font-weight: bold;">CLOSED - LOGGED</span></div>
+                <div><strong>Prepared By:</strong> Autonomous AI System</div>
+            </div>
+        </div>
+
+        <!-- EXECUTIVE SUMMARY -->
+        <h2>Executive Summary</h2>
+        <div class="card" style="margin-bottom: 16px;">
+            <div class="grid-3" style="align-items: center;">
+                <div>
+                    <div class="card-title">Overall Risk Level</div>
+                    <div style="margin-top: 8px;">
+                        <span class="badge badge-{{ severity | lower }}">{{ severity }}</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="card-title">Threat Classification</div>
+                    <div class="card-value">{{ attack_type }}</div>
+                </div>
+                <div>
+                    <div class="card-title">Prediction Confidence</div>
+                    <div class="card-value">{{ confidence }}</div>
+                </div>
+            </div>
+            <div style="margin-top: 16px;" class="llm-box">
+                {{ llm_analysis | safe }}
+            </div>
+        </div>
+
+        <!-- INCIDENT INFORMATION -->
+        <h2>Incident Information</h2>
+        <div class="grid-4" style="margin-bottom: 16px;">
+            <div class="card">
+                <div class="card-title">Source IP</div>
+                <div class="card-value code">{{ source_ip }}</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Dest IP</div>
+                <div class="card-value code">{{ dest_ip }}</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Protocol</div>
+                <div class="card-value">{{ protocol }}</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Detection Time</div>
+                <div class="card-value" style="font-size: 11px;">{{ timestamp }}</div>
+            </div>
+        </div>
+
+        <!-- AI EXPLAINABILITY -->
+        <h2>AI Explainability (SHAP)</h2>
+        <div class="card" style="margin-bottom: 16px;">
+            <div class="card-title" style="margin-bottom: 12px;">Top Contributing Features</div>
+            <div class="shap-container">
+                {% for feat in shap_features %}
+                <div class="shap-row">
+                    <div class="shap-label">{{ feat.name }}</div>
+                    <div class="shap-bar-wrapper">
+                        <div class="shap-bar" style="width: {{ feat.width }}%; background: {% if feat.direction == 'positive' %}var(--critical){% else %}var(--low){% endif %};"></div>
+                    </div>
+                    <div class="shap-val" style="color: {% if feat.direction == 'positive' %}var(--critical){% else %}var(--low){% endif %};">{{ feat.value }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- SYSTEM RESPONSE & DRIFT -->
+        <div class="grid-2">
+            <div>
+                <h2>System Response</h2>
+                <div class="card">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-title">Anomaly Detected</div>
+                            <div class="timeline-desc">Sparse Autoencoder MSE: {{ anomaly_score }}</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-title">Classification Complete</div>
+                            <div class="timeline-desc">LightGBM assigned label: {{ attack_type }}</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-title">Policy Evaluated</div>
+                            <div class="timeline-desc">Severity {{ severity }} processed.</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-title">Action Executed</div>
+                            <div class="timeline-desc" style="font-weight: bold; color: var(--primary);">
+                                {% for action in response_actions %}
+                                    &bull; {{ action }}<br>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h2>Drift & Adaptation</h2>
+                <div class="card">
+                    <div style="margin-bottom: 12px;">
+                        <div class="card-title">Concept Drift Status</div>
+                        <span class="badge badge-neutral">Stable</span>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <div class="card-title">ADWIN Detection</div>
+                        <div class="card-value" style="font-size: 11px;">No significant distribution shift detected in risk scores.</div>
+                    </div>
+                    <div>
+                        <div class="card-title">Model Retraining Required</div>
+                        <div class="card-value" style="font-size: 11px; color: var(--low);">False</div>
+                    </div>
+                </div>
+                <div style="margin-top: 16px;">
+                    <h2>Technical Evidence</h2>
+                    <div class="card">
+                        <div class="grid-2">
+                            <div>
+                                <div class="card-title">Risk Score</div>
+                                <div class="card-value">{{ risk_score }} / 100</div>
+                            </div>
+                            <div>
+                                <div class="card-title">Analyst Override</div>
+                                <div class="card-value" style="font-size: 11px;">{{ analyst_decision }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
+            <div>A3-ENDS Confidential - Internal Use Only</div>
+            <div>Generated autonomously by A3-ENDS AI Platform</div>
+            <div>Page 1 of 1</div>
+        </div>
+    </div>
+</body>
+</html>

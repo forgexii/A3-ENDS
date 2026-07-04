@@ -27,21 +27,11 @@ class ReportsView(QWidget):
         header_layout.addStretch()
         
         # Generate Buttons
-        btn_docx = QPushButton("Generate Forensic Report (Word)")
-        btn_docx.setStyleSheet("background-color: #3B82F6; color: white; padding: 8px 15px; border-radius: 4px; font-weight: bold;")
-        btn_docx.clicked.connect(lambda: self.generate_report("docx"))
-        
-        btn_pptx = QPushButton("Generate Executive Briefing (PPT)")
-        btn_pptx.setStyleSheet("background-color: #F59E0B; color: white; padding: 8px 15px; border-radius: 4px; font-weight: bold;")
-        btn_pptx.clicked.connect(lambda: self.generate_report("pptx"))
+        btn_pdf = QPushButton("Generate Enterprise SOC Report (PDF)")
+        btn_pdf.setStyleSheet("background-color: #3B82F6; color: white; padding: 8px 15px; border-radius: 4px; font-weight: bold;")
+        btn_pdf.clicked.connect(lambda: self.generate_report("pdf"))
 
-        btn_xlsx = QPushButton("Generate Incident Data (Excel)")
-        btn_xlsx.setStyleSheet("background-color: #10B981; color: white; padding: 8px 15px; border-radius: 4px; font-weight: bold;")
-        btn_xlsx.clicked.connect(lambda: self.generate_report("xlsx"))
-        
-        header_layout.addWidget(btn_docx)
-        header_layout.addWidget(btn_pptx)
-        header_layout.addWidget(btn_xlsx)
+        header_layout.addWidget(btn_pdf)
         
         layout.addLayout(header_layout)
         
@@ -121,13 +111,16 @@ class ReportsView(QWidget):
         import requests
         
         ext = rtype.lower()
+        if ext not in ["pdf", "json"]:
+            ext = "pdf" # Default to pdf if type mapping was overwritten backend-side
+        
         default_name = f"report_{report_id}.{ext}"
         
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Save Report",
             default_name,
-            f"{rtype} Files (*.{ext});;All Files (*)"
+            f"{ext.upper()} Files (*.{ext});;All Files (*)"
         )
         
         if file_path:

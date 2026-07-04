@@ -52,7 +52,7 @@ def _generate_report_file(
     Run in a FastAPI BackgroundTask.
     Dispatches to the appropriate builder and updates _report_history.
     """
-    from backend.reports.report_builders import build_docx, build_pptx, build_xlsx
+    from backend.reports.html_generator import generate_html_report
     from backend.llm.report_generator import generate_llm_report
 
     try:
@@ -63,35 +63,11 @@ def _generate_report_file(
         else:
             report_data["llm_analysis"] = json.dumps(llm_result, indent=2)
 
-        # Map frontend report types to actual file extensions
-        type_mapping = {
-            "word_document": "docx",
-            "forensic_report": "docx",
-            "incident_report": "docx",
-            "powerpoint_deck": "pptx",
-            "executive_report": "pptx",
-            "excel_workbook": "xlsx",
-            "docx": "docx",
-            "pptx": "pptx",
-            "xlsx": "xlsx"
-        }
-        
-        req_type = report_type.lower()
-        ext = type_mapping.get(req_type, "json")
-        
+        # We now generate PDF for all report requests
+        ext = "pdf"
         output_path = REPORTS_DIR / f"report_{report_id}.{ext}"
-
-        if ext == "docx":
-            build_docx(report_data, output_path)
-        elif ext == "pptx":
-            build_pptx(report_data, output_path)
-        elif ext == "xlsx":
-            build_xlsx(report_data, output_path)
-        else:
-            # Fallback: write JSON
-            output_path = REPORTS_DIR / f"report_{report_id}.json"
-            with open(output_path, "w") as f:
-                json.dump(report_data, f, indent=2, default=str)
+        
+        generate_html_report(report_data, output_path)
 
         _report_history[report_id].update({
             "status":       "COMPLETE",
@@ -191,7 +167,7 @@ def generate_report(
     # Register as pending
     _report_history[report_id] = {
         "report_id":   report_id,
-        "report_type": report_type,
+        "report_type": "pdf",
         "status":      "PENDING",
         "generated_at": datetime.utcnow(),
         "message":     "Report generation started",
@@ -263,6 +239,7 @@ def download_report(report_id: str):
         "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
         "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "json": "application/json",
+        "pdf": "application/pdf",
     }
     ext        = file_path.rsplit(".", 1)[-1].lower()
     media_type = ext_to_media.get(ext, "application/octet-stream")
