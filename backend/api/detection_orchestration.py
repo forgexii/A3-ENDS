@@ -238,6 +238,30 @@ async def process_detection(
                 "status":           "pending_approval",
                 "suggested_actions": suggested_actions,
             }
+            # Trigger the UI HITL Pop-up — INLINE, not background
+            print(f"[HITL-PUSH] Severity={severity}, requires_analyst=True, pushing WebSocket notification NOW...")
+            try:
+                from backend.api.websocket_routes import push_hitl, _connections
+                ws_payload = {
+                    "detection_id": hitl_decision.get("detection_id"),
+                    "timeout_seconds": hitl_decision.get("timeout_seconds"),
+                    "action": hitl_decision.get("action"),
+                    "detection": {
+                        "attack_type": result.get("attack_type"),
+                        "source_ip": result.get("source_ip"),
+                        "confidence": result.get("confidence"),
+                        "shap_explanation": result.get("shap_explanation")
+                    }
+                }
+                hitl_subscribers = len(_connections.get("hitl", set()))
+                print(f"[HITL-PUSH] Active HITL WebSocket subscribers: {hitl_subscribers}")
+                print(f"[HITL-PUSH] Payload: {ws_payload}")
+                await push_hitl(ws_payload)
+                print(f"[HITL-PUSH] Successfully broadcast to {hitl_subscribers} subscriber(s)")
+            except Exception as push_exc:
+                print(f"[HITL-PUSH] FAILED: {push_exc}")
+                import traceback
+                traceback.print_exc()
 
         # ── STEP 9: DRIFT DETECTION ─────────────────────────────────────────
         drift_status = adwin.update(risk_score / 100.0)
@@ -246,14 +270,20 @@ async def process_detection(
             "drift_detected": drift_status["drift_detected"],
             "estimation":    drift_status["estimation"],
         }
+        # ── STEP 10: RL POLICY UPDATE ───────────────────────────────────────
+        # Always learn from anomaly detections to build the Q-table
+        background_tasks.add_task(_update_rl_model, result["pipeline_id"], result)
+        result["rl_update"] = {"status": "scheduled", "reason": "anomaly_detected"}
+
         if drift_status["drift_detected"]:
-            background_tasks.add_task(_update_rl_model, result["pipeline_id"], result)
-            result["rl_update"] = {"status": "scheduled", "reason": "drift_detected"}
+            background_tasks.add_task(_update_rl_from_drift, result, drift_status["estimation"])
+            result["rl_update"]["drift_learning"] = True
 
         result["status"] = "anomaly_detected"
 
         # ── Write to Alert + possibly Incident ──────────────────────────────
         background_tasks.add_task(_persist_detection_as_alert, result)
+        background_tasks.add_task(_async_push_alert_notification, result)
 
         return result
 
@@ -271,19 +301,24 @@ async def approve_detection(
     notes: Optional[str] = None,
     background_tasks: BackgroundTasks = None,
 ):
-    """Analyst approves detection — triggers response execution."""
+    """Analyst approves detection — triggers response execution and RL learning."""
     try:
-        _, re, hitl, *_ = _get_engines()
+        _, re, hitl, _, rl = _get_engines()
         decision = hitl.analyst_decision(detection_id, "approve", notes)
         if decision.get("status") == "error":
             raise HTTPException(status_code=404, detail=decision["message"])
 
         response_result = re.execute(decision["detection"], approved=True)
+
+        # RL learns from analyst approval (positive reinforcement)
+        rl.learn_from_analyst_decision(decision["detection"], "approve")
+
         return {
             "status":           "approved",
             "detection_id":     detection_id,
             "analyst_notes":    notes,
             "response_executed": response_result,
+            "rl_update":        "learning_from_approval",
             "timestamp":        datetime.utcnow().isoformat(),
         }
     except HTTPException:
@@ -394,7 +429,7 @@ async def get_response_history(limit: int = 100):
 
 
 @router.get("/detection/drift-status")
-async def get_drift_status():
+def get_drift_status():
     """Get current ADWIN drift detection status."""
     try:
         _, _, _, adwin, _ = _get_engines()
@@ -434,6 +469,15 @@ def _update_rl_model(detection_id: str, detection_data: Dict):
         print(f"[RL] Model updated for {detection_id}")
     except Exception as e:
         print(f"[RL] Error updating model: {e}")
+
+
+def _update_rl_from_drift(detection_data: Dict, drift_value: float):
+    try:
+        _, _, _, _, rl = _get_engines()
+        rl.learn_from_drift(detection_data, drift_value)
+        print(f"[RL] Drift learning applied (drift={drift_value:.4f})")
+    except Exception as e:
+        print(f"[RL] Error in drift learning: {e}")
 
 
 def _persist_detection_as_alert(result: Dict):
@@ -481,32 +525,44 @@ def _persist_detection_as_alert(result: Dict):
             db.add(incident)
 
         db.commit()
-
-        # WebSocket push — run in new event loop if no loop is running
-        try:
-            from backend.api.websocket_routes import push_alert
-            ws_payload = {
-                "id":           result.get("pipeline_id"),
-                "attack_type":  result.get("attack_type"),
-                "severity":     result.get("severity"),
-                "risk_score":   result.get("risk_score"),
-                "source_ip":    result.get("source_ip"),
-                "destination_ip": result.get("destination_ip"),
-            }
-            try:
-                loop = _asyncio.get_event_loop()
-                if loop.is_running():
-                    _asyncio.ensure_future(push_alert(ws_payload))
-                else:
-                    loop.run_until_complete(push_alert(ws_payload))
-            except RuntimeError:
-                _asyncio.run(push_alert(ws_payload))
-        except Exception as ws_exc:
-            print(f"[Persist] WebSocket push failed (non-critical): {ws_exc}")
-
     except Exception as exc:
         print(f"[Persist] Failed to write alert/incident: {exc}")
         db.rollback()
     finally:
         db.close()
 
+async def _async_push_alert_notification(result: dict):
+    """Pushes an alert to the WebSocket asynchronously."""
+    try:
+        from backend.api.websocket_routes import push_alert
+        ws_payload = {
+            "id":           result.get("pipeline_id"),
+            "attack_type":  result.get("attack_type"),
+            "severity":     result.get("severity"),
+            "risk_score":   result.get("risk_score"),
+            "source_ip":    result.get("source_ip"),
+            "destination_ip": result.get("destination_ip"),
+        }
+        await push_alert(ws_payload)
+    except Exception as ws_exc:
+        print(f"[Persist] WebSocket push failed: {ws_exc}")
+
+
+async def _async_push_hitl_notification(hitl_decision: dict, result: dict):
+    """Pushes a HITL approval request to the WebSocket asynchronously."""
+    try:
+        from backend.api.websocket_routes import push_hitl
+        ws_payload = {
+            "detection_id": hitl_decision.get("detection_id"),
+            "timeout_seconds": hitl_decision.get("timeout_seconds"),
+            "action": hitl_decision.get("action"),
+            "detection": {
+                "attack_type": result.get("attack_type"),
+                "source_ip": result.get("source_ip"),
+                "confidence": result.get("confidence"),
+                "shap_explanation": result.get("shap_explanation")
+            }
+        }
+        await push_hitl(ws_payload)
+    except Exception as ws_exc:
+        print(f"[Persist] WebSocket HITL push failed: {ws_exc}")

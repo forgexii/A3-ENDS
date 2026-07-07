@@ -89,6 +89,17 @@ class FeatureExtractor:
             # CICIDS2017 Flow IAT Mean is in microseconds
             mean_iat = float(np.mean(iats) * 1e6)
 
+        # ── Port Scan Amplification ──
+        # If this is a port scan meta-flow, the raw per-packet features
+        # are misleadingly small. Amplify using the aggregated scan stats.
+        if flow.get("_is_portscan"):
+            unique_ports = flow.get("_unique_ports", 1)
+            # A port scan hitting 100+ ports in seconds is extremely anomalous
+            # Scale total_bytes by unique ports to reflect the scanning volume
+            total_bytes = float(packet_count * mean_packet_size * unique_ports)
+            # Reflect rapid-fire probing in the packet count
+            packet_count = max(packet_count, unique_ports)
+
         return {
 
             # ==================================

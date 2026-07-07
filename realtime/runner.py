@@ -35,13 +35,7 @@ from realtime.features.feature_extractor import (
     FeatureExtractor
 )
 
-from realtime.inference.inference_engine import (
-    InferenceEngine
-)
-
-from backend.services.event_store import (
-    EventStore
-)
+import requests
 
 
 class RealtimeEngine:
@@ -53,12 +47,6 @@ class RealtimeEngine:
         self.flow_manager = FlowManager()
 
         self.extractor = FeatureExtractor()
-
-        self.inference_engine = (
-            InferenceEngine()
-        )
-
-        self.event_store = EventStore()
 
         self.running = False
 
@@ -137,106 +125,31 @@ class RealtimeEngine:
     ):
 
         features = (
-
             self.extractor.extract(
                 flow
             )
-
         )
+        
+        print(f"\n[DEBUG] Extracted Features: {features['packet_count']} pkts, {features['duration']} duration")
 
-        result = (
-
-            self.inference_engine.detect(
-                features
+        try:
+            # Forward the features to the main A3-ENDS Orchestration API
+            response = requests.post(
+                "http://127.0.0.1:8000/api/detection/process", 
+                json=features,
+                timeout=5
             )
-
-        )
-
-        event = {
-
-            "source_ip":
-                features[
-                    "source_ip"
-                ],
-
-            "destination_ip":
-                features[
-                    "destination_ip"
-                ],
-
-            "source_port":
-                features[
-                    "source_port"
-                ],
-
-            "destination_port":
-                features[
-                    "destination_port"
-                ],
-
-            "protocol":
-                features[
-                    "protocol"
-                ],
-
-            "anomaly_score":
-                result[
-                    "anomaly_score"
-                ],
-
-            "threshold":
-                result[
-                    "threshold"
-                ],
-
-            "is_anomaly":
-                result[
-                    "is_anomaly"
-                ],
-
-            "classification":
-                result.get(
-                    "classification"
-                ),
-
-            "attack_type":
-                result.get(
-                    "attack_type"
-                ),
-
-            "confidence":
-                result.get(
-                    "confidence"
-                ),
-
-            "severity":
-                result.get(
-                    "severity"
-                ),
-
-            "risk_score":
-                result.get(
-                    "risk_score"
-                )
-        }
-
-        self.event_store.add_event(
-            event
-        )
-
-        print(
-            "\nDetection Stored"
-        )
-
-        print(
-            f"Anomaly: "
-            f"{event['is_anomaly']}"
-        )
-
-        print(
-            f"Score: "
-            f"{event['anomaly_score']}"
-        )
+            
+            if response.status_code == 200:
+                result = response.json()
+                print("\nDetection Processed by API")
+                print(f"Anomaly: {result.get('status') == 'anomaly_detected'}")
+                print(f"Score: {result.get('steps', {}).get('autoencoder', {}).get('score', 0)}")
+            else:
+                print(f"\nAPI Error: {response.text}")
+                
+        except Exception as e:
+            print(f"\nFailed to reach backend API: {e}")
 
     # ==========================================
     # STOP
@@ -245,8 +158,6 @@ class RealtimeEngine:
     def stop(self):
 
         self.running = False
-
-        self.event_store.close()
 
 
 if __name__ == "__main__":

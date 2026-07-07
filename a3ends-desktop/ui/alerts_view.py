@@ -54,11 +54,11 @@ class AlertsView(QWidget):
             time_str = alert.get("timestamp", "").replace("T", " ")[:19]
             self.table.setItem(row, 1, QTableWidgetItem(time_str))
             
-            self.table.setItem(row, 2, QTableWidgetItem(alert.get("source_ip")))
-            self.table.setItem(row, 3, QTableWidgetItem(alert.get("attack_type")))
+            self.table.setItem(row, 2, QTableWidgetItem(alert.get("src_ip", alert.get("source_ip", ""))))
+            self.table.setItem(row, 3, QTableWidgetItem(alert.get("attack", alert.get("attack_type", ""))))
             
-            sev_item = QTableWidgetItem(alert.get("severity"))
-            sev = alert.get("severity")
+            sev = alert.get("severity", "")
+            sev_item = QTableWidgetItem(sev)
             if sev == "CRITICAL":
                 sev_item.setForeground(Qt.GlobalColor.red)
             elif sev == "HIGH":

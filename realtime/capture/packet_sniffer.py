@@ -49,7 +49,8 @@ class PacketSniffer:
         try:
             sniff(
                 prn=self.packet_callback,
-                store=False
+                store=False,
+                iface="vboxnet0"
             )
         except PermissionError:
             print(

@@ -1,0 +1,32 @@
+{
+  "HIGH|False": {
+    "MONITOR": 0.7223535844500151,
+    "NOTIFY": 0.0,
+    "BLOCK": 0.1,
+    "QUARANTINE": 0.0
+  },
+  "CRITICAL|False": {
+    "MONITOR": -0.1,
+    "NOTIFY": 0.0,
+    "BLOCK": 0.0,
+    "QUARANTINE": 0.1
+  },
+  "HIGH|True": {
+    "MONITOR": 0.0,
+    "NOTIFY": 0.0,
+    "BLOCK": -0.009999999999999998,
+    "QUARANTINE": 0.0
+  },
+  "MEDIUM|False": {
+    "MONITOR": 0.5695327900000001,
+    "NOTIFY": 0.0,
+    "BLOCK": 0.0,
+    "QUARANTINE": 0.0
+  },
+  "LOW|False": {
+    "MONITOR": 0.1,
+    "NOTIFY": 0.0,
+    "BLOCK": 0.0,
+    "QUARANTINE": 0.0
+  }
+}

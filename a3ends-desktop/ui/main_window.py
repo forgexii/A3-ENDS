@@ -135,6 +135,11 @@ class MainWindow(QMainWindow):
         self.alerts_view.refresh_data()
 
     def on_hitl_needed(self, data):
+        print(f"[MAIN-WINDOW] *** HITL SIGNAL RECEIVED! Opening dialog... ***")
+        print(f"[MAIN-WINDOW] Data: {data}")
         dialog = HITLDialog(data, self.api_client, self)
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
         dialog.exec()
 

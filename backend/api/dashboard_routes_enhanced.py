@@ -88,19 +88,8 @@ def get_full_dashboard(
     
     # Get ADWIN drift status from the actual service
     try:
-        import asyncio
-        loop = asyncio.get_event_loop()
-        
-        # get_drift_status is an async function, we need to run it synchronously or await it
-        if loop.is_running():
-            # If we're already in an async context, we'd normally await, but get_full_dashboard is a sync endpoint.
-            # However, FastAPI runs sync endpoints in a threadpool where loop.is_running() is true but it's not the same thread.
-            import threading
-            import nest_asyncio
-            nest_asyncio.apply()
-            drift_data = loop.run_until_complete(get_drift_status())
-        else:
-            drift_data = asyncio.run(get_drift_status())
+        # get_drift_status is now a sync function, we can just call it directly
+        drift_data = get_drift_status()
             
         is_drift = drift_data.get("drift_detected", False)
         adwin_status = "DRIFT_DETECTED" if is_drift else "STABLE"

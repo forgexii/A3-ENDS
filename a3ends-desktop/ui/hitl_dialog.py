@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QScrollArea, QWidget
 from PyQt6.QtCore import Qt, QTimer
 import json
 
@@ -11,7 +11,8 @@ class HITLDialog(QDialog):
         self.timeout = data.get("timeout_seconds", 30)
         
         self.setWindowTitle("ACTION REQUIRED - HITL")
-        self.setFixedSize(500, 350)
+        self.setMinimumSize(520, 500)
+        self.setMaximumSize(600, 700)
         self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | Qt.WindowType.WindowTitleHint)
         self.setStyleSheet("QDialog { background-color: #0F172A; border: 2px solid #EF4444; border-radius: 8px; }")
         
@@ -32,6 +33,25 @@ class HITLDialog(QDialog):
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
         
+        # Scrollable content area
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setStyleSheet("""
+            QScrollArea { border: none; background: transparent; }
+            QScrollBar:vertical {
+                background: #1E293B; width: 8px; border-radius: 4px;
+            }
+            QScrollBar::handle:vertical {
+                background: #475569; border-radius: 4px; min-height: 30px;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+        """)
+        
+        scroll_widget = QWidget()
+        scroll_layout = QVBoxLayout(scroll_widget)
+        scroll_layout.setContentsMargins(0, 0, 0, 0)
+        scroll_layout.setSpacing(10)
+        
         # Details Frame
         frame = QFrame()
         frame.setStyleSheet("background-color: #1E293B; border-radius: 6px; padding: 10px;")
@@ -49,7 +69,30 @@ class HITLDialog(QDialog):
             lbl.setStyleSheet("color: #E2E8F0; font-size: 14px;")
             frame_layout.addWidget(lbl)
             
-        layout.addWidget(frame)
+        # Add SHAP explanation if available
+        shap_data = detection.get("shap_explanation")
+        if shap_data and isinstance(shap_data, dict):
+            lbl_shap = QLabel("<b>AI Decision Drivers (SHAP):</b>")
+            lbl_shap.setStyleSheet("color: #E2E8F0; font-size: 14px; margin-top: 10px;")
+            frame_layout.addWidget(lbl_shap)
+            
+            # Show ALL SHAP features, sorted by absolute importance
+            shap_text = ""
+            sorted_shap = sorted(shap_data.items(), key=lambda x: abs(float(x[1])), reverse=True)
+            for feature, importance in sorted_shap:
+                color = "#EF4444" if float(importance) > 0 else "#22C55E"
+                direction = "▲" if float(importance) > 0 else "▼"
+                shap_text += f"• {feature}: <span style='color: {color};'>{direction} {float(importance):.4f}</span><br>"
+            
+            lbl_shap_val = QLabel(shap_text)
+            lbl_shap_val.setStyleSheet("color: #94A3B8; font-size: 13px;")
+            lbl_shap_val.setWordWrap(True)
+            frame_layout.addWidget(lbl_shap_val)
+        
+        scroll_layout.addWidget(frame)
+        scroll_layout.addStretch()
+        scroll_area.setWidget(scroll_widget)
+        layout.addWidget(scroll_area, 1)  # stretch factor 1 so it fills space
         
         # Timer
         self.lbl_timer = QLabel(f"Time remaining: {self.timeout}s")

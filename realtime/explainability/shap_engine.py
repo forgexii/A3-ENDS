@@ -53,10 +53,14 @@ class SHAPEngine:
         ml_only = {k: features.get(k, 0.0) for k in ML_FEATURE_NAMES}
         df = pd.DataFrame([ml_only], columns=ML_FEATURE_NAMES)
 
-        shap_values = self.explainer.shap_values(df)
+        # Scale features, just like we fixed in ClassificationEngine!
+        scaler = joblib.load(MODELS_DIR / "realtime_scaler.pkl")
+        df_scaled = pd.DataFrame(scaler.transform(df), columns=ML_FEATURE_NAMES)
+
+        shap_values = self.explainer.shap_values(df_scaled)
 
         import numpy as np
-        proba = self.model.predict_proba(df)[0]
+        proba = self.model.predict_proba(df_scaled)[0]
         pred_class = int(np.argmax(proba))
 
         # Multi-class returns a list in older SHAP, or a 3D array in newer SHAP

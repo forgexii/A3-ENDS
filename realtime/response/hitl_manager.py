@@ -29,8 +29,8 @@ _USE_MEMORY_FALLBACK = False
 TIMEOUT_MAP = {
     "LOW":      0,    # no analyst review
     "MEDIUM":   300,  # 5 minutes
-    "HIGH":     300,  # 5 minutes (auto-execute after)
-    "CRITICAL": 60,   # 1 minute  (auto-execute after)
+    "HIGH":     300,  # 5 minutes
+    "CRITICAL": 300,  # 5 minutes
 }
 
 AUTO_EXECUTE_SEVERITIES = {"HIGH", "CRITICAL"}

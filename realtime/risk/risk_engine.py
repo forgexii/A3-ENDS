@@ -11,22 +11,21 @@ class RiskEngine:
     def __init__(self):
 
         self.attack_names = {
-
-            0: "BENIGN",
-
-            1: "PORTSCAN",
-
-            2: "DOS",
-
-            3: "DDOS",
-
-            4: "BRUTE_FORCE",
-
-            5: "BOTNET",
-
-            6: "WEB_ATTACK",
-
-            7: "INFILTRATION"
+            "BENIGN": "BENIGN",
+            "PortScan": "PORTSCAN",
+            "DoS GoldenEye": "DOS",
+            "DoS Hulk": "DOS",
+            "DoS Slowhttptest": "DOS",
+            "DoS slowloris": "DOS",
+            "DDoS": "DDOS",
+            "FTP-Patator": "BRUTE_FORCE",
+            "SSH-Patator": "BRUTE_FORCE",
+            "Bot": "BOTNET",
+            "Web Attack \ufffd Brute Force": "WEB_ATTACK",
+            "Web Attack \ufffd Sql Injection": "WEB_ATTACK",
+            "Web Attack \ufffd XSS": "WEB_ATTACK",
+            "Heartbleed": "WEB_ATTACK",
+            "Infiltration": "INFILTRATION"
         }
 
         self.base_weights = {
@@ -57,8 +56,9 @@ class RiskEngine:
         classification
     ):
 
+        # Handle potential string mismatches or missing labels
         return self.attack_names.get(
-            classification,
+            str(classification).strip(),
             "UNKNOWN"
         )
 
@@ -106,25 +106,26 @@ class RiskEngine:
             }
 
         attack_type = (
-
             self.get_attack_name(
-
                 result[
                     "classification"
                 ]
-
             )
-
         )
 
-        base_score = (
-
-            self.base_weights.get(
-                attack_type,
-                50
+        # AI Contradiction Fallback Logic
+        # If the Autoencoder screams Anomaly, but LightGBM thinks it's Benign, 
+        # it means this is an Out-of-Distribution / Zero-Day attack!
+        if attack_type == "BENIGN":
+            attack_type = "ZERO_DAY_ANOMALY"
+            base_score = 85  # Treat unknown massive anomalies as HIGH/CRITICAL risk
+        else:
+            base_score = (
+                self.base_weights.get(
+                    attack_type,
+                    50
+                )
             )
-
-        )
 
         confidence = (
 

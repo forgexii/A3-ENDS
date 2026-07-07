@@ -14,12 +14,12 @@ import logging
 import random
 from pathlib import Path
 
-from backend.core.paths import MODELS_DIR
+from backend.core.paths import PROJECT_ROOT
 
 logger = logging.getLogger(__name__)
 
-# Persist inside the models directory so it travels with trained artefacts
-_Q_TABLE_PATH: Path = MODELS_DIR / "rl" / "q_table.json"
+# Persist Q-table in the realtime/rl directory (user-writable)
+_Q_TABLE_PATH: Path = PROJECT_ROOT / "realtime" / "rl" / "q_table.json"
 
 
 def _tuple_key(state) -> str:

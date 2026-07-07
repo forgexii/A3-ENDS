@@ -22,10 +22,12 @@ class ClassificationEngine:
         )
 
         self.model = joblib.load(
-
-            MODELS_DIR /
-            "lightgbm/lightgbm_model.pkl"
-
+            MODELS_DIR / "lightgbm/lightgbm_model.pkl"
+        )
+        
+        print("Loading LabelEncoder...")
+        self.label_encoder = joblib.load(
+            MODELS_DIR / "label_encoder.pkl"
         )
 
         print(
@@ -57,27 +59,30 @@ class ClassificationEngine:
         df = pd.DataFrame(
             [ml_only], columns=ml_feature_names
         )
+        
+        # Load the scaler (since model was trained on scaled features!)
+        scaler = joblib.load(MODELS_DIR / "realtime_scaler.pkl")
+        df_scaled = scaler.transform(df)
 
-        prediction = int(
-
+        # The model predicts the encoded integer
+        pred_int = int(
             self.model.predict(
-                df
+                df_scaled
             )[0]
-
         )
+        
+        # Convert back to the original string label (e.g. "PortScan", "DoS Hulk")
+        prediction_str = self.label_encoder.inverse_transform([pred_int])[0]
 
         confidence = float(
-
             self.model.predict_proba(
-                df
+                df_scaled
             ).max()
-
         )
 
         return {
-
             "classification":
-                prediction,
+                prediction_str,
 
             "confidence":
                 confidence

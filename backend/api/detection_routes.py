@@ -112,66 +112,7 @@ def get_detection(
 
     return detection
 
-
-# ==========================================
-# ALERTS
-# ==========================================
-
-@router.get(
-
-    "/alerts",
-
-    response_model=
-        List[
-            DetectionResponse
-        ]
-)
-
-def get_alerts(
-
-    limit: int = 100,
-
-    db: Session = Depends(
-        get_db
-    )
-
-):
-
-    return (
-
-        detection_service
-        .get_alerts(
-
-            db,
-
-            limit
-
-        )
-
-    )
+# Endpoint removed to prevent shadowing the dedicated alerts_routes.py
 
 
-# ==========================================
-# DASHBOARD
-# ==========================================
-
-@router.get(
-    "/dashboard/stats"
-)
-
-def dashboard_stats(
-
-    db: Session = Depends(
-        get_db
-    )
-
-):
-
-    return (
-
-        detection_service
-        .dashboard_stats(
-            db
-        )
-
-    )
+# Endpoint removed to prevent shadowing dashboard_routes_enhanced.py
