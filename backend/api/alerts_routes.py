@@ -21,7 +21,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=AlertListResponse)
+@router.get("", response_model=AlertListResponse)
 def get_alerts(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),

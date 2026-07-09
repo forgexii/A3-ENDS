@@ -61,6 +61,15 @@ class ApiClient(QObject):
         self.workers.append(worker)
         worker.start()
 
+    def generate_weekly_report(self, callback, error_callback):
+        worker = ApiWorker("reports/weekly")
+        worker.finished.connect(callback)
+        worker.error.connect(error_callback)
+        worker.finished.connect(lambda: self.workers.remove(worker) if worker in self.workers else None)
+        worker.error.connect(lambda: self.workers.remove(worker) if worker in self.workers else None)
+        self.workers.append(worker)
+        worker.start()
+
     def resolve_hitl(self, detection_id, action, callback, error_callback):
         # action is one of "approve", "reject", "investigate"
         worker = ApiPostWorker(f"detection/{detection_id}/{action}", data={"notes": "Resolved via desktop UI"})

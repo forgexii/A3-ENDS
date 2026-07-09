@@ -32,3 +32,9 @@ def generate_llm_report(
     return client.analyze_detection(
         detection
     )
+
+def generate_weekly_llm_summary(stats: dict) -> str:
+    return client.generate_weekly_summary(stats)
+
+def generate_weekly_llm_recommendations(stats: dict) -> str:
+    return client.generate_weekly_recommendations(stats)

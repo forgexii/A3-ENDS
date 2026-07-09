@@ -136,3 +136,34 @@ class OpenRouterClient:
                 "error":
                     str(e)
             }
+
+    def generate_weekly_summary(self, stats: dict) -> str:
+        if not self.api_key: return "LLM Summary not available (No API Key)"
+        from backend.llm.prompt_templates import build_weekly_summary_prompt
+        prompt = build_weekly_summary_prompt(stats)
+        return self._send_prompt(prompt)
+
+    def generate_weekly_recommendations(self, stats: dict) -> str:
+        if not self.api_key: return "LLM Recommendations not available (No API Key)"
+        from backend.llm.prompt_templates import build_weekly_recommendations_prompt
+        prompt = build_weekly_recommendations_prompt(stats)
+        return self._send_prompt(prompt)
+
+    def _send_prompt(self, prompt: str) -> str:
+        payload = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 1000,
+            "temperature": 0.3
+        }
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        try:
+            resp = requests.post(self.url, json=payload, headers=headers, timeout=60)
+            if resp.status_code == 200:
+                return resp.json()["choices"][0]["message"]["content"].strip()
+            return f"Error: {resp.status_code} - {resp.text}"
+        except Exception as e:
+            return f"Error: {str(e)}"

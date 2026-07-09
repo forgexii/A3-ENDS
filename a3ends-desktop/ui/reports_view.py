@@ -27,11 +27,16 @@ class ReportsView(QWidget):
         header_layout.addStretch()
         
         # Generate Buttons
-        btn_pdf = QPushButton("Generate Enterprise SOC Report (PDF)")
+        btn_pdf = QPushButton("Generate Single Incident Report (PDF)")
         btn_pdf.setStyleSheet("background-color: #3B82F6; color: white; padding: 8px 15px; border-radius: 4px; font-weight: bold;")
         btn_pdf.clicked.connect(lambda: self.generate_report("pdf"))
+        
+        btn_weekly = QPushButton("Generate Weekly SOC Report")
+        btn_weekly.setStyleSheet("background-color: #10B981; color: white; padding: 8px 15px; border-radius: 4px; font-weight: bold;")
+        btn_weekly.clicked.connect(self.generate_weekly)
 
         header_layout.addWidget(btn_pdf)
+        header_layout.addWidget(btn_weekly)
         
         layout.addLayout(header_layout)
         
@@ -101,6 +106,11 @@ class ReportsView(QWidget):
     def generate_report(self, rtype):
         self.api_client.generate_report(rtype, self.on_generate_success, self.on_error)
         QMessageBox.information(self, "Generating", f"Started generation for {rtype.upper()} report. It will appear in the table shortly.")
+        self.refresh_data()
+
+    def generate_weekly(self):
+        self.api_client.generate_weekly_report(self.on_generate_success, self.on_error)
+        QMessageBox.information(self, "Generating", "Started generation for Weekly SOC Report. This aggregates a lot of data and uses the LLM, so it will take a moment.")
         self.refresh_data()
 
     def on_generate_success(self, data):

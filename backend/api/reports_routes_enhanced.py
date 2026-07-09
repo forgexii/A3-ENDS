@@ -81,6 +81,41 @@ def _generate_report_file(
         _report_history[report_id]["message"] = str(exc)
         print(f"[ReportGen] Failed for {report_id}: {exc}")
 
+def _generate_weekly_report_file(
+    report_id: str,
+    db: Session
+):
+    from backend.services.weekly_report_service import WeeklyReportService
+    from backend.llm.report_generator import generate_weekly_llm_summary, generate_weekly_llm_recommendations
+    from backend.reports.weekly_report_generator import generate_weekly_pdf_report
+    
+    try:
+        # 1. Gather data
+        stats = WeeklyReportService.aggregate_weekly_metrics(db)
+        
+        # 2. Get LLM generations
+        summary = generate_weekly_llm_summary(stats)
+        recommendations = generate_weekly_llm_recommendations(stats)
+        
+        # 3. Generate PDF
+        ext = "pdf"
+        output_path = REPORTS_DIR / f"weekly_soc_report_{report_id}.{ext}"
+        
+        generate_weekly_pdf_report(stats, summary, recommendations, output_path)
+        
+        _report_history[report_id].update({
+            "status":       "COMPLETE",
+            "file_path":    str(output_path),
+            "file_size":    output_path.stat().st_size,
+            "download_url": f"/api/reports/download/{report_id}",
+        })
+        
+    except Exception as exc:
+        _report_history[report_id]["status"]  = "FAILED"
+        _report_history[report_id]["message"] = str(exc)
+        print(f"[WeeklyReportGen] Failed for {report_id}: {exc}")
+
+
 
 # ---------------------------------------------------------------------------
 # ROUTES
@@ -249,6 +284,34 @@ def download_report(report_id: str):
         media_type      = media_type,
         filename        = f"A3-ENDS_report_{report_id}.{ext}",
     )
+
+
+@router.get("/weekly")
+def generate_weekly_soc_report(
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """Generates the massive 18-section A3 landscape PDF for the Weekly SOC Report."""
+    report_id = str(uuid.uuid4())[:8]
+    
+    _report_history[report_id] = {
+        "report_id":   report_id,
+        "report_type": "weekly_pdf",
+        "status":      "PENDING",
+        "generated_at": datetime.utcnow(),
+        "message":     "Generating Weekly SOC Report...",
+    }
+    
+    background_tasks.add_task(_generate_weekly_report_file, report_id, db)
+    
+    return ReportGenerationResponse(
+        status="PENDING",
+        report_id=report_id,
+        report_type="weekly_pdf",
+        generated_at=datetime.utcnow(),
+        message="Generating Weekly SOC Report PDF..."
+    )
+
 
 
 @router.get("/summary")
