@@ -18,11 +18,11 @@ class ClassificationEngine:
     def __init__(self):
 
         print(
-            "Loading LightGBM..."
+            "Loading XGBoost..."
         )
 
         self.model = joblib.load(
-            MODELS_DIR / "lightgbm/lightgbm_model.pkl"
+            MODELS_DIR / "xgboost/xgboost_model.pkl"
         )
         
         print("Loading LabelEncoder...")

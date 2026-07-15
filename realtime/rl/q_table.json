@@ -1,6 +1,6 @@
 {
   "HIGH|False": {
-    "MONITOR": 0.7223535844500151,
+    "MONITOR": 0.8804823221316974,
     "NOTIFY": 0.0,
     "BLOCK": 0.1,
     "QUARANTINE": 0.0
@@ -18,7 +18,7 @@
     "QUARANTINE": 0.0
   },
   "MEDIUM|False": {
-    "MONITOR": 0.5695327900000001,
+    "MONITOR": 0.814697981114816,
     "NOTIFY": 0.0,
     "BLOCK": 0.0,
     "QUARANTINE": 0.0

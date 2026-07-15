@@ -29,7 +29,7 @@ class SHAPEngine:
     def __init__(self):
         print("Loading SHAP explainer...")
         self.model = joblib.load(
-            MODELS_DIR / "lightgbm/lightgbm_model.pkl"
+            MODELS_DIR / "xgboost/xgboost_model.pkl"
         )
         self.explainer = shap.TreeExplainer(self.model)
         print("SHAP engine ready.")

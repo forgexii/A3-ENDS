@@ -1,0 +1,57 @@
+[
+    {
+        "Model":"Decision Tree",
+        "Accuracy":0.9982531083,
+        "Precision (Macro)":0.8638773114,
+        "Recall (Macro)":0.8709953452,
+        "F1-Score (Macro)":0.8606447539,
+        "ROC-AUC":0.9354177102,
+        "Training Time (s)":83.191637516,
+        "Prediction Time (s)":0.1785202026,
+        "Peak Memory (MB)":1009.7463932037
+    },
+    {
+        "Model":"Random Forest",
+        "Accuracy":0.9983874846,
+        "Precision (Macro)":0.8570352877,
+        "Recall (Macro)":0.8328770491,
+        "F1-Score (Macro)":0.8434573886,
+        "ROC-AUC":0.9900167624,
+        "Training Time (s)":123.944070816,
+        "Prediction Time (s)":3.1630606651,
+        "Peak Memory (MB)":1098.6626367569
+    },
+    {
+        "Model":"XGBoost",
+        "Accuracy":0.9986067301,
+        "Precision (Macro)":0.8300644254,
+        "Recall (Macro)":0.8445621708,
+        "F1-Score (Macro)":0.8277372703,
+        "ROC-AUC":0.9752377569,
+        "Training Time (s)":116.0983664989,
+        "Prediction Time (s)":3.2315194607,
+        "Peak Memory (MB)":233.1875562668
+    },
+    {
+        "Model":"LightGBM",
+        "Accuracy":0.7537908256,
+        "Precision (Macro)":0.137619133,
+        "Recall (Macro)":0.1289752744,
+        "F1-Score (Macro)":0.1264494775,
+        "ROC-AUC":0.5442183722,
+        "Training Time (s)":67.2975685596,
+        "Prediction Time (s)":3.7352619171,
+        "Peak Memory (MB)":690.4720373154
+    },
+    {
+        "Model":"CatBoost",
+        "Accuracy":0.9980444715,
+        "Precision (Macro)":0.8315186458,
+        "Recall (Macro)":0.8188400577,
+        "F1-Score (Macro)":0.8167011737,
+        "ROC-AUC":0.9956323336,
+        "Training Time (s)":392.6347970963,
+        "Prediction Time (s)":0.4560387135,
+        "Peak Memory (MB)":0.0760231018
+    }
+]
