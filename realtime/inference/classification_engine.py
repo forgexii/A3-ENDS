@@ -2,7 +2,7 @@
 Classification Engine
 
 Classifies anomalous flows using
-the trained LightGBM model.
+the trained XGBoost model.
 """
 
 import joblib
