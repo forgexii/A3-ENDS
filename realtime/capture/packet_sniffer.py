@@ -47,10 +47,14 @@ class PacketSniffer:
         )
 
         try:
+            from scapy.all import conf
+            default_iface = conf.iface
+            print(f"[*] Automatically binding to default interface: {default_iface}")
+            
             sniff(
                 prn=self.packet_callback,
                 store=False,
-                iface="vboxnet0"
+                iface=default_iface
             )
         except PermissionError:
             print(

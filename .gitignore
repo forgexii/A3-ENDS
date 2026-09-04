@@ -16,14 +16,21 @@ __pycache__/
 datasets/raw/
 datasets/processed/
 datasets/features/
-datasets/realtime_features/
+# We keep the raw CICIDS2017 and cleaned dataset ignored because they are > 100MB
 datasets/CICIDS2017/
+datasets/cleaned_cicids2017/
+# But we DO push the realtime feature arrays since they are < 100MB
+!datasets/realtime_features/
+!datasets/realtime_features/**/*
+# Keep csv ignored globally, except in certain directories if needed
 *.csv
-*.npy
+# Un-ignore npy so realtime features can be pushed
+# *.npy
 
-# Trained Models (Optional: Comment out if you DO want to push them and they are < 100MB)
-# models/**/*.pkl
-# models/**/*.keras
+# Trained Models (Pushing them as requested)
+!models/**/*.pkl
+!models/**/*.keras
+!models/**/*.txt
 
 # Databases
 backend/data/*.db
