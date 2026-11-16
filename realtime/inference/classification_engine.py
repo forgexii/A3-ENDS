@@ -25,10 +25,19 @@ class ClassificationEngine:
             MODELS_DIR / "xgboost/xgboost_model.pkl"
         )
         
-        print("Loading LabelEncoder...")
-        self.label_encoder = joblib.load(
-            MODELS_DIR / "label_encoder.pkl"
-        )
+        import json
+        mapping_file = MODELS_DIR / "label_mapping.json"
+        if not mapping_file.exists():
+            mapping_file = MODELS_DIR.parent / "datasets/realtime_features/CICIDS2017/label_mapping.json"
+        if mapping_file.exists():
+            with open(mapping_file, "r") as f:
+                raw_map = json.load(f)
+                self.label_map = {int(k): v for k, v in raw_map.items()}
+        else:
+            self.label_map = {
+                0: "Benign", 1: "Botnet", 2: "Brute Force", 3: "DDoS",
+                4: "DoS", 5: "Infiltration", 6: "Portscan", 7: "Web Attack"
+            }
 
         print(
             "Classification engine ready."
@@ -71,8 +80,8 @@ class ClassificationEngine:
             )[0]
         )
         
-        # Convert back to the original string label (e.g. "PortScan", "DoS Hulk")
-        prediction_str = self.label_encoder.inverse_transform([pred_int])[0]
+        # Convert back to human-readable canonical class label
+        prediction_str = self.label_map.get(pred_int, f"Class_{pred_int}")
 
         confidence = float(
             self.model.predict_proba(

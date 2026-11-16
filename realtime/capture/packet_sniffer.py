@@ -54,9 +54,10 @@ class PacketSniffer:
             sniff(
                 prn=self.packet_callback,
                 store=False,
-                iface=default_iface
+                iface=default_iface,
+                stop_filter=lambda p: not self.running
             )
-        except PermissionError:
+        except (PermissionError, OSError):
             print(
                 "\n[WARNING] Root privileges required for raw packet sniffing."
             )
@@ -73,16 +74,26 @@ class PacketSniffer:
         
         import time
         import random
-        from scapy.all import IP, TCP, Ether
+        import logging
+        logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
+        from scapy.all import IP, TCP, Ether, Raw
+
+        client_ports = [1024, 1025, 1026, 1027, 1028]
+        dst_ips = ["192.168.1.1", "192.168.1.20", "192.168.1.50"]
 
         while self.running:
+            sport = random.choice(client_ports)
+            dst_ip = random.choice(dst_ips)
+            payload_len = random.randint(0, 1200)
+            payload = Raw(b"X" * payload_len) if payload_len > 0 else b""
             
-            # Create a mock TCP packet with randomized ports/sizes to simulate traffic
-            pkt = Ether() / IP(src="192.168.1.100", dst="10.0.0.5") / TCP(sport=random.randint(1024, 65535), dport=80)
+            # Create a mock TCP packet with realistic features to simulate traffic
+            pkt = Ether() / IP(src="192.168.1.100", dst=dst_ip) / TCP(sport=sport, dport=80) / payload
+            pkt.time = time.time()
             
             self.packet_callback(pkt)
             
-            time.sleep(random.uniform(0.01, 0.1))
+            time.sleep(random.uniform(0.02, 0.08))
 
     # ==========================================
     # GET NEXT PACKET
@@ -103,3 +114,11 @@ class PacketSniffer:
     def queue_size(self):
 
         return self.packet_queue.qsize()
+
+    # ==========================================
+    # STOP
+    # ==========================================
+
+    def stop(self):
+
+        self.running = False

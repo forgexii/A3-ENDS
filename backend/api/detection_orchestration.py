@@ -19,6 +19,7 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from typing import Dict, List, Optional
 from datetime import datetime
 import json
+import uuid
 
 # Import orchestration components
 try:
@@ -126,7 +127,7 @@ async def process_detection(
         is_anomaly = ae_score > ie.threshold
 
         result = {
-            "pipeline_id":     f"DETECT-{datetime.utcnow().timestamp():.0f}",
+            "pipeline_id":     f"DETECT-{int(datetime.utcnow().timestamp() * 1000)}-{uuid.uuid4().hex[:6]}",
             "timestamp":       datetime.utcnow().isoformat(),
             "source_ip":       features.get("source_ip", ""),
             "destination_ip":  features.get("destination_ip", ""),
@@ -145,6 +146,7 @@ async def process_detection(
 
         if not is_anomaly:
             result["classification"] = {"attack_type": "BENIGN", "confidence": 1.0}
+            result["attack_type"] = "BENIGN"
             result["severity"] = "LOW"
             result["status"]   = "benign"
             return result

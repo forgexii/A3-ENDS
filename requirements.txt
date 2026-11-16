@@ -16,6 +16,7 @@ river
 # Backend API
 fastapi
 uvicorn
+websockets
 sqlalchemy
 
 # Packet capture

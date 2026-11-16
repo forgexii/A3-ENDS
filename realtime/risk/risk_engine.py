@@ -12,20 +12,41 @@ class RiskEngine:
 
         self.attack_names = {
             "BENIGN": "BENIGN",
+            "Benign": "BENIGN",
+            "0": "BENIGN",
             "PortScan": "PORTSCAN",
+            "Portscan": "PORTSCAN",
+            "PORTSCAN": "PORTSCAN",
+            "6": "PORTSCAN",
             "DoS GoldenEye": "DOS",
             "DoS Hulk": "DOS",
             "DoS Slowhttptest": "DOS",
             "DoS slowloris": "DOS",
+            "DoS": "DOS",
+            "DOS": "DOS",
+            "4": "DOS",
             "DDoS": "DDOS",
+            "DDOS": "DDOS",
+            "3": "DDOS",
             "FTP-Patator": "BRUTE_FORCE",
             "SSH-Patator": "BRUTE_FORCE",
+            "Brute Force": "BRUTE_FORCE",
+            "BRUTE_FORCE": "BRUTE_FORCE",
+            "2": "BRUTE_FORCE",
             "Bot": "BOTNET",
+            "Botnet": "BOTNET",
+            "BOTNET": "BOTNET",
+            "1": "BOTNET",
             "Web Attack \ufffd Brute Force": "WEB_ATTACK",
             "Web Attack \ufffd Sql Injection": "WEB_ATTACK",
             "Web Attack \ufffd XSS": "WEB_ATTACK",
+            "Web Attack": "WEB_ATTACK",
+            "WEB_ATTACK": "WEB_ATTACK",
+            "7": "WEB_ATTACK",
             "Heartbleed": "WEB_ATTACK",
-            "Infiltration": "INFILTRATION"
+            "Infiltration": "INFILTRATION",
+            "INFILTRATION": "INFILTRATION",
+            "5": "INFILTRATION"
         }
 
         self.base_weights = {
@@ -55,12 +76,12 @@ class RiskEngine:
         self,
         classification
     ):
-
-        # Handle potential string mismatches or missing labels
-        return self.attack_names.get(
-            str(classification).strip(),
-            "UNKNOWN"
-        )
+        s = str(classification).strip()
+        if s in self.attack_names:
+            return self.attack_names[s]
+        if s.upper() in self.attack_names:
+            return self.attack_names[s.upper()]
+        return "UNKNOWN"
 
     # ==========================================
     # SEVERITY LEVEL

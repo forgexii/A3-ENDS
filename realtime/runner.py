@@ -20,8 +20,16 @@ Response Engine
 Database Storage
 """
 
+import os
+import sys
+from pathlib import Path
 import threading
 import time
+
+# Ensure project root is in sys.path when runner.py is executed directly (e.g., sudo python3 runner.py)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from realtime.capture.packet_sniffer import (
     PacketSniffer
@@ -158,8 +166,16 @@ class RealtimeEngine:
     def stop(self):
 
         self.running = False
+        if hasattr(self, 'sniffer') and self.sniffer:
+            self.sniffer.stop()
 
 
 if __name__ == "__main__":
 
-    RealtimeEngine().start()
+    engine = RealtimeEngine()
+    try:
+        engine.start()
+    except KeyboardInterrupt:
+        print("\nStopping Realtime AI-NIDS...")
+        engine.stop()
+        print("Realtime AI-NIDS stopped.")

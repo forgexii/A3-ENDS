@@ -15,7 +15,9 @@ from sqlalchemy.orm import (
 )
 from backend.core.paths import PROJECT_ROOT
 
-DATABASE_URL = f"sqlite:///{PROJECT_ROOT / 'backend' / 'data' / 'a3_ends.db'}"
+DB_DIR = PROJECT_ROOT / 'backend' / 'data'
+DB_DIR.mkdir(parents=True, exist_ok=True)
+DATABASE_URL = f"sqlite:///{DB_DIR / 'a3_ends.db'}"
 
 
 engine = create_engine(

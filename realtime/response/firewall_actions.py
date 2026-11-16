@@ -36,7 +36,13 @@ class FirewallActions:
         Returns:
             Action result dict
         """
-        source_ip = detection.get("source_ip", "UNKNOWN")
+        source_ip = detection.get("source_ip") or "UNKNOWN"
+        if not source_ip or source_ip == "UNKNOWN":
+            return {
+                "action": "block_ip",
+                "status": "skipped_no_ip",
+                "timestamp": datetime.utcnow().isoformat()
+            }
         
         if source_ip in self.blocked_ips:
             logger.warning(f"IP already blocked: {source_ip}")
@@ -81,10 +87,15 @@ class FirewallActions:
         Returns:
             Action result dict
         """
-        source_ip = detection.get("source_ip", "UNKNOWN")
-        
+        source_ip = detection.get("source_ip") or "UNKNOWN"
+        if not source_ip or source_ip == "UNKNOWN":
+            return {
+                "action": "rate_limit",
+                "status": "skipped_no_ip",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+
         self.rate_limited_ips[source_ip] = {
-            "max_connections": max_connections,
             "window_seconds": window_seconds,
             "created_at": datetime.utcnow(),
             "expires_at": datetime.utcnow() + timedelta(seconds=window_seconds * 10)
@@ -117,7 +128,13 @@ class FirewallActions:
         Returns:
             Action result dict
         """
-        source_ip = detection.get("source_ip", "UNKNOWN")
+        source_ip = detection.get("source_ip") or "UNKNOWN"
+        if not source_ip or source_ip == "UNKNOWN":
+            return {
+                "action": "terminate_connections",
+                "status": "skipped_no_ip",
+                "timestamp": datetime.utcnow().isoformat()
+            }
         port = detection.get("port", 0)
         
         self.termination_queue.append({

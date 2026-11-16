@@ -43,3 +43,8 @@ backend/data/*.sqlite
 .idea/
 .DS_Store
 Thumbs.db
+
+# Local reproducibility symlinks
+experiments
+results
+
