@@ -115,34 +115,76 @@ def train_and_evaluate(name, model, X_train, y_train, X_test, y_test, num_classe
 
 def plot_bar_chart(results_df):
     print("[*] Plotting Metrics Comparison Bar Chart...")
-    metrics_to_plot = ['Accuracy', 'Precision (Macro)', 'Recall (Macro)', 'F1-Score (Macro)']
-    
-    df_melted = pd.melt(results_df, id_vars=['Model'], value_vars=metrics_to_plot, 
-                        var_name='Metric', value_name='Score')
-    
-    plt.figure(figsize=(12, 6))
-    sns.barplot(x='Metric', y='Score', hue='Model', data=df_melted, palette='viridis')
-    plt.title("Model Evaluation Metrics Comparison", fontsize=16)
-    plt.ylim(0, 1.1)
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    metrics_to_plot = ['Accuracy', 'Precision (Macro)', 'Recall (Macro)', 'F1-Score (Macro)', 'ROC-AUC']
+    models = results_df['Model'].tolist()
+
+    fig, ax = plt.subplots(figsize=(15, 6.5))
+
+    x = np.arange(len(metrics_to_plot))
+    total_models = len(models)
+    bar_width = 0.15
+    offsets = np.linspace(-(total_models - 1) / 2 * bar_width, (total_models - 1) / 2 * bar_width, total_models)
+
+    colors = ['#20639B', '#3CAEA3', '#F6D55C', '#ED553B', '#833471']
+
+    for i, model_name in enumerate(models):
+        model_row = results_df[results_df['Model'] == model_name].iloc[0]
+        vals = [model_row[m] for m in metrics_to_plot]
+        bars = ax.bar(x + offsets[i], vals, bar_width, label=model_name, color=colors[i], edgecolor='black', linewidth=0.6)
+        
+        for bar in bars:
+            h = bar.get_height()
+            if h > 0.05:
+                ax.text(bar.get_x() + bar.get_width() / 2, h + 0.015, f'{h*100:.1f}%' if h <= 1.0 else f'{h:.2f}', 
+                        ha='center', va='bottom', fontsize=7.5, rotation=90)
+
+    ax.set_title('Model Evaluation Metrics Comparison', fontsize=15, fontweight='bold', pad=15)
+    ax.set_ylabel('Score / Ratio', fontsize=12, fontweight='bold')
+    ax.set_xticks(x)
+    ax.set_xticklabels(metrics_to_plot, fontsize=11, fontweight='bold')
+    ax.set_ylim(0, 1.18)
+    ax.grid(axis='y', linestyle='--', alpha=0.5)
+    ax.legend(title='Model', bbox_to_anchor=(1.02, 1), loc='upper left', fontsize=10, title_fontsize=11)
+
     plt.tight_layout()
-    plt.savefig(OUTPUT_DIR / "metrics_comparison.png")
+    plt.savefig(OUTPUT_DIR / "metrics_comparison.png", dpi=300)
     plt.close()
     
 def plot_timing_chart(results_df):
     print("[*] Plotting Timing/Memory Comparison...")
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5.5))
     
-    # Timing
-    sns.barplot(x='Model', y='Training Time (s)', data=results_df, ax=axes[0], palette='Blues_r')
-    axes[0].set_title("Training Time Comparison (seconds)")
+    time_colors = ['#2b5c8f', '#3b78b0', '#4a95d0', '#6baed6', '#9ecae1']
+    mem_colors  = ['#a50f15', '#de2d26', '#fb6a4a', '#fc9272', '#fcbba1']
+
+    # 1. Timing
+    bars1 = axes[0].bar(results_df['Model'], results_df['Training Time (s)'], color=time_colors, edgecolor='black', linewidth=0.8, width=0.6)
+    axes[0].set_title("Training Time Comparison (seconds)", fontsize=13, fontweight='bold', pad=12)
+    axes[0].set_ylabel("Training Time (s)", fontsize=11)
+    axes[0].grid(axis='y', linestyle='--', alpha=0.5)
+    for bar in bars1:
+        val = bar.get_height()
+        axes[0].text(bar.get_x() + bar.get_width() / 2, val + max(results_df['Training Time (s)']) * 0.02,
+                     f"{val:.2f} s", ha='center', va='bottom', fontsize=9.5, fontweight='bold')
+    axes[0].set_ylim(0, max(results_df['Training Time (s)']) * 1.15)
+    axes[0].tick_params(axis='x', rotation=15)
     
-    # Memory
-    sns.barplot(x='Model', y='Peak Memory (MB)', data=results_df, ax=axes[1], palette='Reds_r')
-    axes[1].set_title("Peak Memory Usage (MB)")
+    # 2. Memory
+    bars2 = axes[1].bar(results_df['Model'], results_df['Peak Memory (MB)'], color=mem_colors, edgecolor='black', linewidth=0.8, width=0.6)
+    axes[1].set_title("Peak Memory Usage (MB)", fontsize=13, fontweight='bold', pad=12)
+    axes[1].set_ylabel("Peak Memory (MB)", fontsize=11)
+    axes[1].grid(axis='y', linestyle='--', alpha=0.5)
+    for bar in bars2:
+        val = bar.get_height()
+        label_text = f"{val:.2f} MB" if val < 1.0 else f"{val:.1f} MB"
+        axes[1].text(bar.get_x() + bar.get_width() / 2, val + 20,
+                     label_text, ha='center', va='bottom',
+                     fontsize=9.5, fontweight='bold')
+    axes[1].set_ylim(0, max(results_df['Peak Memory (MB)']) * 1.18)
+    axes[1].tick_params(axis='x', rotation=15)
     
     plt.tight_layout()
-    plt.savefig(OUTPUT_DIR / "timing_memory_comparison.png")
+    plt.savefig(OUTPUT_DIR / "timing_memory_comparison.png", dpi=300)
     plt.close()
 
 def plot_confusion_matrices(models_dict, y_test, label_names):
