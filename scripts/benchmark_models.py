@@ -232,7 +232,7 @@ def plot_confusion_matrices(models_dict, y_test, label_names):
         ax.set_title(f"Confusion Matrix - {name}", fontsize=34, fontweight='bold', pad=25)
         ax.set_ylabel('True Label', fontsize=30, fontweight='bold', labelpad=20)
         ax.set_xlabel('Predicted Label', fontsize=30, fontweight='bold', labelpad=20)
-        ax.set_xticklabels(cleaned_label_names, rotation=45, ha='right', fontsize=24, fontweight='bold')
+        ax.set_xticklabels(cleaned_label_names, rotation=45, ha='right', rotation_mode='anchor', fontsize=24, fontweight='bold')
         ax.set_yticklabels(cleaned_label_names, fontsize=24, fontweight='bold')
         plt.tight_layout()
         plt.savefig(OUTPUT_DIR / f"confusion_matrix_{name.replace(' ', '_').lower()}.png", dpi=300, bbox_inches='tight')

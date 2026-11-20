@@ -232,7 +232,7 @@ plt.ylabel(
 )
 
 if clean_display_labels:
-    ax.set_xticklabels(clean_display_labels, rotation=45, ha='right', fontsize=24, fontweight='bold')
+    ax.set_xticklabels(clean_display_labels, rotation=45, ha='right', rotation_mode='anchor', fontsize=24, fontweight='bold')
     ax.set_yticklabels(clean_display_labels, fontsize=24, fontweight='bold')
 else:
     ax.tick_params(axis='both', labelsize=24)
@@ -265,12 +265,22 @@ plt.close()
 
 print("Generating feature importance report...")
 
-feature_names_df = pd.read_csv(
-    FEATURES_DIR /
-    "feature_names.csv",
-    header=0
-)
-feature_names = feature_names_df["0"].tolist()
+feature_names_path = FEATURES_DIR / "feature_names.csv"
+if feature_names_path.exists():
+    feature_names_df = pd.read_csv(
+        feature_names_path,
+        header=0
+    )
+    feature_names = feature_names_df["0"].tolist()
+else:
+    feature_names = [
+        "duration",
+        "packet_count",
+        "mean_packet_size",
+        "std_packet_size",
+        "total_bytes",
+        "mean_iat",
+    ]
 
 
 feature_importance = pd.DataFrame({
