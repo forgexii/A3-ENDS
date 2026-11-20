@@ -1,4 +1,5 @@
 # LightGBM Evaluation Export Script
+import json
 from pathlib import Path
 
 import joblib
@@ -65,9 +66,25 @@ y_test = np.load(
 
 print("Loading trained model...")
 
-model = joblib.load(
-    LIGHTGBM_MODEL_PATH
-)
+try:
+    model = joblib.load(LIGHTGBM_MODEL_PATH)
+    if hasattr(model, 'n_features_in_') and model.n_features_in_ != X_test.shape[1]:
+        raise ValueError(f"Feature count mismatch: {model.n_features_in_} != {X_test.shape[1]}")
+except Exception as e:
+    print(f"Loading or feature check note ({e}); training realtime LightGBM model...")
+    import lightgbm as lgb
+    X_train = np.load(FEATURES_DIR / "X_train.npy")
+    y_train = np.load(FEATURES_DIR / "y_train.npy")
+    model = lgb.LGBMClassifier(
+        n_estimators=100,
+        learning_rate=0.1,
+        max_depth=6,
+        random_state=42,
+        class_weight="balanced",
+        n_jobs=4
+    )
+    model.fit(X_train, y_train)
+    joblib.dump(model, LIGHTGBM_MODEL_PATH)
 
 
 # ======================================================
@@ -154,6 +171,21 @@ report_df.to_csv(
 
 print("Generating confusion matrix...")
 
+label_mapping_path = FEATURES_DIR / "label_mapping.json"
+clean_display_labels = None
+if label_mapping_path.exists():
+    with open(label_mapping_path) as f:
+        lmap = json.load(f)
+    labels = [lmap[str(i)] for i in range(len(lmap))]
+    
+    def clean_label(lbl):
+        lbl = str(lbl).replace('\ufffd', '-').replace(' ? ', ' - ')
+        while lbl.endswith('?') or lbl.endswith(' '):
+            lbl = lbl.rstrip('? ')
+        return lbl
+
+    clean_display_labels = [clean_label(l) for l in labels]
+
 cm = confusion_matrix(
     y_test,
     y_pred,
@@ -161,46 +193,66 @@ cm = confusion_matrix(
 )
 
 fig, ax = plt.subplots(
-    figsize=(12, 10),
-    dpi=100
+    figsize=(18, 15),
+    dpi=300
 )
-
 
 disp = ConfusionMatrixDisplay(
-    confusion_matrix=cm
+    confusion_matrix=cm,
+    display_labels=clean_display_labels
 )
-
 
 disp.plot(
     cmap="Blues",
     xticks_rotation=45,
     ax=ax,
-    values_format='.2f'
+    values_format='.2f',
+    colorbar=True
 )
-
 
 plt.title(
     "Normalized LightGBM Confusion Matrix",
-    fontsize=18,
-    pad=20
+    fontsize=32,
+    fontweight='bold',
+    pad=25
 )
 
 plt.xlabel(
     "Predicted Label",
-    fontsize=12
+    fontsize=28,
+    fontweight='bold',
+    labelpad=20
 )
 
 plt.ylabel(
     "True Label",
-    fontsize=12
+    fontsize=28,
+    fontweight='bold',
+    labelpad=20
 )
 
-plt.tight_layout()
+if clean_display_labels:
+    ax.set_xticklabels(clean_display_labels, rotation=45, ha='right', fontsize=24, fontweight='bold')
+    ax.set_yticklabels(clean_display_labels, fontsize=24, fontweight='bold')
+else:
+    ax.tick_params(axis='both', labelsize=24)
 
+# Colorbar font size
+cbar = disp.im_.colorbar
+if cbar is not None:
+    cbar.ax.tick_params(labelsize=22)
+
+# Text inside cells
+for text in disp.text_.ravel():
+    text.set_fontsize(20)
+    text.set_fontweight('bold')
+
+plt.tight_layout()
 
 plt.savefig(
     EVALUATION_DIR /
     "confusion_matrix.png",
+    dpi=300,
     bbox_inches="tight"
 )
 

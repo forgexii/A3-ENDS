@@ -5,7 +5,10 @@ import json
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
+try:
+    import seaborn as sns
+except ImportError:
+    sns = None
 import joblib
 from pathlib import Path
 
@@ -15,7 +18,10 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
-from catboost import CatBoostClassifier
+try:
+    from catboost import CatBoostClassifier
+except ImportError:
+    CatBoostClassifier = None
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
     roc_auc_score, confusion_matrix, roc_curve, auc,
@@ -23,8 +29,9 @@ from sklearn.metrics import (
 )
 
 # Constants
-DATASET_PATH = "datasets/cleaned_cicids2017/cleaned_cicids2017.csv"
-OUTPUT_DIR = Path("reports/benchmark_comparison")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DATASET_PATH = PROJECT_ROOT / "datasets/cleaned_cicids2017/cleaned_cicids2017.csv"
+OUTPUT_DIR = PROJECT_ROOT / "reports/benchmark_comparison"
 SAMPLE_FRACTION = 0.50  # 50% sample to speed up Random Forest on 1.8M rows
 
 def setup_directories():
@@ -114,11 +121,11 @@ def train_and_evaluate(name, model, X_train, y_train, X_test, y_test, num_classe
     return metrics, y_pred, y_proba, importances
 
 def plot_bar_chart(results_df):
-    print("[*] Plotting Metrics Comparison Bar Chart...")
+    print("[*] Plotting Metrics Comparison Bar Chart (Large Font >= 24px)...")
     metrics_to_plot = ['Accuracy', 'Precision (Macro)', 'Recall (Macro)', 'F1-Score (Macro)', 'ROC-AUC']
     models = results_df['Model'].tolist()
 
-    fig, ax = plt.subplots(figsize=(15, 6.5))
+    fig, ax = plt.subplots(figsize=(26, 13))
 
     x = np.arange(len(metrics_to_plot))
     total_models = len(models)
@@ -130,24 +137,27 @@ def plot_bar_chart(results_df):
     for i, model_name in enumerate(models):
         model_row = results_df[results_df['Model'] == model_name].iloc[0]
         vals = [model_row[m] for m in metrics_to_plot]
-        bars = ax.bar(x + offsets[i], vals, bar_width, label=model_name, color=colors[i], edgecolor='black', linewidth=0.6)
+        bars = ax.bar(x + offsets[i], vals, bar_width, label=model_name, color=colors[i], edgecolor='black', linewidth=1.2)
         
         for bar in bars:
             h = bar.get_height()
             if h > 0.05:
-                ax.text(bar.get_x() + bar.get_width() / 2, h + 0.015, f'{h*100:.1f}%' if h <= 1.0 else f'{h:.2f}', 
-                        ha='center', va='bottom', fontsize=7.5, rotation=90)
+                ax.text(bar.get_x() + bar.get_width() / 2, h + 0.02, f'{h*100:.1f}%' if h <= 1.0 else f'{h:.2f}', 
+                        ha='center', va='bottom', fontsize=24, fontweight='bold', rotation=90)
 
-    ax.set_title('Model Evaluation Metrics Comparison', fontsize=15, fontweight='bold', pad=15)
-    ax.set_ylabel('Score / Ratio', fontsize=12, fontweight='bold')
+    ax.set_title('Model Evaluation Metrics Comparison', fontsize=32, fontweight='bold', pad=25)
+    ax.set_ylabel('Score / Ratio', fontsize=28, fontweight='bold', labelpad=15)
     ax.set_xticks(x)
-    ax.set_xticklabels(metrics_to_plot, fontsize=11, fontweight='bold')
-    ax.set_ylim(0, 1.18)
-    ax.grid(axis='y', linestyle='--', alpha=0.5)
-    ax.legend(title='Model', bbox_to_anchor=(1.02, 1), loc='upper left', fontsize=10, title_fontsize=11)
+    ax.set_xticklabels(metrics_to_plot, fontsize=24, fontweight='bold')
+    ax.tick_params(axis='y', labelsize=24)
+    ax.tick_params(axis='x', pad=12)
+    ax.set_ylim(0, 1.32)
+    ax.grid(axis='y', linestyle='--', alpha=0.5, linewidth=1.2)
+    legend = ax.legend(title='Model', bbox_to_anchor=(1.01, 1), loc='upper left', fontsize=24, title_fontsize=26, frameon=True)
+    legend.get_title().set_fontweight('bold')
 
     plt.tight_layout()
-    plt.savefig(OUTPUT_DIR / "metrics_comparison.png", dpi=300)
+    plt.savefig(OUTPUT_DIR / "metrics_comparison.png", dpi=300, bbox_inches='tight')
     plt.close()
     
 def plot_timing_chart(results_df):
@@ -188,20 +198,44 @@ def plot_timing_chart(results_df):
     plt.close()
 
 def plot_confusion_matrices(models_dict, y_test, label_names):
-    print("[*] Plotting Confusion Matrices...")
+    print("[*] Plotting Confusion Matrices (Large Font >= 24px, Bold Captions)...")
+    
+    def clean_label(lbl):
+        lbl = str(lbl).replace('\ufffd', '-').replace(' ? ', ' - ')
+        while lbl.endswith('?') or lbl.endswith(' '):
+            lbl = lbl.rstrip('? ')
+        return lbl
+
+    cleaned_label_names = [clean_label(l) for l in label_names]
+
     for name, data in models_dict.items():
         y_pred = data['y_pred']
         cm = confusion_matrix(y_test, y_pred)
         
-        plt.figure(figsize=(10, 8))
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
-                    xticklabels=label_names, yticklabels=label_names)
-        plt.title(f"Confusion Matrix - {name}")
-        plt.ylabel('True Label')
-        plt.xlabel('Predicted Label')
-        plt.xticks(rotation=45, ha='right')
+        fig, ax = plt.subplots(figsize=(26, 20), dpi=300)
+        if sns is not None:
+            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                        xticklabels=cleaned_label_names, yticklabels=cleaned_label_names,
+                        ax=ax,
+                        annot_kws={"size": 16, "weight": "bold"},
+                        cbar_kws={"label": "Count"})
+            cbar = ax.collections[0].colorbar
+            cbar.ax.tick_params(labelsize=22)
+            cbar.set_label("Count", fontsize=24, fontweight='bold')
+        else:
+            im = ax.imshow(cm, cmap='Blues')
+            cbar = plt.colorbar(im, ax=ax)
+            cbar.ax.tick_params(labelsize=22)
+            ax.set_xticks(range(len(cleaned_label_names)))
+            ax.set_yticks(range(len(cleaned_label_names)))
+            
+        ax.set_title(f"Confusion Matrix - {name}", fontsize=34, fontweight='bold', pad=25)
+        ax.set_ylabel('True Label', fontsize=30, fontweight='bold', labelpad=20)
+        ax.set_xlabel('Predicted Label', fontsize=30, fontweight='bold', labelpad=20)
+        ax.set_xticklabels(cleaned_label_names, rotation=45, ha='right', fontsize=24, fontweight='bold')
+        ax.set_yticklabels(cleaned_label_names, fontsize=24, fontweight='bold')
         plt.tight_layout()
-        plt.savefig(OUTPUT_DIR / f"confusion_matrix_{name.replace(' ', '_').lower()}.png")
+        plt.savefig(OUTPUT_DIR / f"confusion_matrix_{name.replace(' ', '_').lower()}.png", dpi=300, bbox_inches='tight')
         plt.close()
 
 def plot_roc_curves(models_dict, y_test, num_classes, label_names):
